@@ -15,6 +15,7 @@ const config = JSON.parse(fs.readFileSync("env.json"));
 const botChar = "$";
 let lastRoomId = "";
 let replyText = "";
+let heartbeat_last = "never";
 helpText = `Available commands:
 ${botChar}temperature
 ${botChar}pressure
@@ -24,6 +25,7 @@ ${botChar}heartbeat <subcommand>
 ${botChar}help
 ${botChar}bot
 ${botChar}whoami
+${botChar}hello
 ${botChar}echo <message>
 For help on the commands just type the commands without further arguments`;
 helpListen = `Available subcommands:
@@ -33,7 +35,8 @@ interval <number>`;
 helpHeartbeat = `Available subcommands:
 on
 off
-interval <number>`
+interval <number>
+last`
 
 
 // matrix bot init
@@ -58,15 +61,86 @@ function udp_send(msg) {
     console.log(`<< ${IP4_BROADCAST}:${port} ${msg}`);
 }
 
-function bot_reply(id, msg) {
+function bot_reply_notice(id, msg) {
     bot.sendMessage(id, {
         "msgtype": "m.notice",
-        "body": msg,
+        "body": msg
     });
     console.log(`<< ${id}: ${msg}`);
 }
 
-async function messageHandler(roomId, event) {
+function bot_reply_code(id, msg) {
+    bot.sendMessage(id, {
+        "msgtype": "m.text",
+        "body": msg,
+        "format": "org.matrix.custom.html",
+        "formatted_body": `<code>${msg}</code>`
+    });
+    console.log(`<< ${id}: ${msg}`);
+}
+
+function handle_udp_message(obj) {
+    let replyText = "";
+
+    // switch on type value
+    switch (obj.type) {
+        // response it send after a get request
+        case "response":
+            if (obj.hasOwnProperty('quantity')) {
+                if (obj.quantity.name == 'temperature') {
+                    replyText += `${obj.time}: temperature = ${obj.quantity.value} ${obj.quantity.unit}. `;
+                }
+                if (obj.quantity.name == 'pressure') {
+                    replyText += `${obj.time}: pressure = ${obj.quantity.value} ${obj.quantity.unit}. `;
+                }
+            }
+
+            // abort if no room is available
+            if (lastRoomId != "") {
+                bot_reply_code(lastRoomId, replyText);
+            }
+            else {
+                console.log("Empty room id");
+            }
+            break;
+
+        // measurement is send periodically w/o a request
+        case "measurement":
+            if (listenContinousFlag &
+                obj.hasOwnProperty('time') &
+                obj.hasOwnProperty('quantity')) {
+                replyText += `${obj.time}: `;
+                obj.quantity.forEach(element => {
+                    if (element.name == 'temperature') {
+                        replyText += `temperature = ${element.value} ${element.unit}. `;
+                    }
+                    if (element.name == 'pressure') {
+                        replyText += `pressure = ${element.value} ${element.unit}. `;
+                    }
+                });
+                // replyText = `The pressure is ${obj.pressure} at ${obj.temperature} degrees celsius.`;
+                // abort if no room is available
+                if (lastRoomId != "") {
+                    bot_reply_code(lastRoomId, replyText);
+                }
+                else {
+                    console.log("Empty room id");
+                }
+            }
+            break;
+
+        case "heartbeat":
+            heartbeat_last = obj.time;
+            break;
+
+
+        default:
+            break;
+
+    }
+}
+
+async function handle_matrix_message(roomId, event) {
     // ignore emptly events
     if (!event["content"]) return;
 
@@ -138,6 +212,10 @@ async function messageHandler(roomId, event) {
                         udp_send(JSON.stringify(res));
                         break;
 
+                    case "last":
+                        bot_reply_code(roomId, `Last heartbeat: ${heartbeat_last}`);
+                        break;
+
                     default:
                         bot_reply(roomId, helpHeartbeat);
                         break;
@@ -149,12 +227,12 @@ async function messageHandler(roomId, event) {
                 switch (words[1]) {
                     case "on":
                         listenContinousFlag = true;
-                        bot_reply(roomId, "Start listening for measurements.");
+                        bot_reply_notice(roomId, "Start listening for measurements.");
                         break;
 
                     case "off":
                         listenContinousFlag = false;
-                        bot_reply(roomId, "Stop listening for measurements.");
+                        bot_reply_notice(roomId, "Stop listening for measurements.");
                         break;
 
                     case "interval":
@@ -165,30 +243,35 @@ async function messageHandler(roomId, event) {
                         break;
 
                     default:
-                        bot_reply(roomId, helpListen);
+                        bot_reply_notice(roomId, helpListen);
                         break;
                 }
                 break;
 
             case "bot":
-                bot_reply(roomId, "I am a bot.");
+                bot_reply_notice(roomId, "I am a bot.");
                 break;
 
             case "whoami":
-                bot_reply(roomId, sender);
+                bot_reply_notice(roomId, sender);
                 break
 
+            case "hello":
+                bot_reply_notice(roomId, `Hello ${sender.slice(1,sender.indexOf(':'))}!`);
+                break
+
+
             case "echo":
-                bot_reply(roomId, body.substring("!echo".length).trim());
+                bot_reply_notice(roomId, body.substring("!echo".length).trim());
                 break;
 
             case "help":
                 // standard help
-                bot_reply(roomId, helpText);
+                bot_reply_notice(roomId, helpText);
                 break;
 
             default:
-                bot_reply(roomId, `How can I help you?\nYou can write '${botChar}help' for help.`);
+                bot_reply_notice(roomId, `How can I help you?\nYou can write '${botChar}help' for help.`);
                 break;
         }
     }
@@ -202,64 +285,14 @@ udp.on('error', (err) => {
 udp.on('message', (msg, rinfo) => {
     // assume message is in json format
     let obj = JSON.parse(msg.toString());
-    let replyText = "";
 
     console.log(`>> ${rinfo.address}:${rinfo.port} ${msg.toString()}`);
 
     // only send bot reply the udp message is correct
     if (obj.hasOwnProperty('type')) {
-        // switch on type value
-        switch (obj.type) {
-            // response it send after a get request
-            case "response":
-                if (obj.hasOwnProperty('quantity')) {
-                    if (obj.quantity.name == 'temperature') {
-                        replyText += `temperature: ${obj.quantity.value} ${obj.quantity.unit}. `;
-                    }
-                    if (obj.quantity.name == 'pressure') {
-                        replyText += `pressure: ${obj.quantity.value} ${obj.quantity.unit}. `;
-                    }
-                }
-
-                // abort if no room is available
-                if (lastRoomId != "") {
-                    bot_reply(lastRoomId, replyText);
-                }
-                else {
-                    console.log("Empty room id");
-                }
-                break;
-
-            // measurement is send periodically w/o a request
-            case "measurement":
-                if (listenContinousFlag &
-                    obj.hasOwnProperty('time') &
-                    obj.hasOwnProperty('quantity')) {
-                    obj.quantity.forEach(element => {
-                        if (element.name == 'temperature') {
-                            replyText += `temperature: ${element.value} ${element.unit}. `;
-                        }
-                        if (element.name == 'pressure') {
-                            replyText += `pressure: ${element.value} ${element.unit}. `;
-                        }
-                    });
-                    // replyText = `The pressure is ${obj.pressure} at ${obj.temperature} degrees celsius.`;
-                    // abort if no room is available
-                    if (lastRoomId != "") {
-                        bot_reply(lastRoomId, replyText);
-                    }
-                    else {
-                        console.log("Empty room id");
-                    }
-                }
-                break;
-
-            default:
-                break;
-
-        }
+        handle_udp_message(obj);
     } else {
-        bot_reply("I could not handle the received UDP message.");
+        bot_reply_notice("I could not handle the received UDP message.");
     }
 });
 
@@ -269,5 +302,5 @@ udp.on('listening', () => {
 });
 
 udp.bind(port);
-bot.on("room.message", messageHandler);
+bot.on("room.message", handle_matrix_message);
 bot.start().then(() => console.log("Bot started!"));
