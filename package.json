@@ -1,7 +1,7 @@
 {
     "name": "bot-matrix-udp-esp32",
     "description": "A Matrix bot that uses UDP to communicate to another device like the esp32.",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "private": true,
     "main": "main.js",
     "dependencies": {
