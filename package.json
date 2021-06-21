@@ -5,7 +5,7 @@
     "private": true,
     "main": "main.js",
     "dependencies": {
-        "matrix-bot-sdk": "0.5.17"
+        "matrix-bot-sdk": "0.5.18"
     },
     "scripts": {
         "start": "node main.js"
