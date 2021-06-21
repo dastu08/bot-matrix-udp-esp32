@@ -24,3 +24,6 @@ The IP address of the other UDP device, like the esp32 must be specified in the 
 You interact with the bot by sending message in a room in which the bot is presend. Currently the room has to be unencrypted for the bot to work.  
 
 The bot listens on keywords that are prepended with a bot character for example `$`. The keywords are `help`, `bot`, `echo`, etc. `help` will show you a complete list of the available keywords.
+
+## Docker
+If you would like to run the bot in a docker container, you can use the `Dockerfile` to build an image. Just run `docker build . -t bot:develop`. Then you can start the container with the given `docker-compose.yml` file. Make sure that the name under image is the same as you have set during the docker build process.

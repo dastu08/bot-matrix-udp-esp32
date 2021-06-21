@@ -1,0 +1,8 @@
+version: '3.7'
+services: 
+  bot:
+    image: bot:develop
+    ports: 
+      - "50000:50000/udp"
+    volumes: 
+      - ./env.json:/bot/env.json
