@@ -26,6 +26,7 @@ ${botChar}help
 ${botChar}bot
 ${botChar}whoami
 ${botChar}hello
+${botChar}panik
 ${botChar}echo <message>
 For help on the commands just type the commands without further arguments`;
 helpListen = `Available subcommands:
@@ -47,7 +48,6 @@ AutojoinRoomsMixin.setupOnClient(bot);
 // udp init
 const port = 50000;
 const IP4_BROADCAST = "192.168.179.30";
-let listenFlag = false;
 let listenContinousFlag = false;
 
 // functions
@@ -68,6 +68,15 @@ function bot_reply_notice(id, msg) {
     });
     console.log(`<< ${id}: ${msg}`);
 }
+
+function bot_reply_text(id, msg) {
+    bot.sendMessage(id, {
+        "msgtype": "m.text",
+        "body": msg
+    });
+    console.log(`<< ${id}: ${msg}`);
+}
+
 
 function bot_reply_code(id, msg) {
     bot.sendMessage(id, {
@@ -257,7 +266,7 @@ async function handle_matrix_message(roomId, event) {
                 break
 
             case "hello":
-                bot_reply_notice(roomId, `Hello ${sender.slice(1,sender.indexOf(':'))}!`);
+                bot_reply_notice(roomId, `Hello ${sender.slice(1, sender.indexOf(':'))}!`);
                 break
 
 
@@ -268,6 +277,10 @@ async function handle_matrix_message(roomId, event) {
             case "help":
                 // standard help
                 bot_reply_notice(roomId, helpText);
+                break;
+
+            case "panik":
+                bot_reply_text(roomId, "🧻");
                 break;
 
             default:
