@@ -97,16 +97,16 @@ function handle_udp_message(obj) {
         case "response":
             if (obj.hasOwnProperty('quantity')) {
                 if (obj.quantity.name == 'temperature') {
-                    replyText += `${obj.time}: temperature = ${obj.quantity.value} ${obj.quantity.unit}. `;
+                    replyText += `temperature = ${obj.quantity.value} ${obj.quantity.unit}. `;
                 }
                 if (obj.quantity.name == 'pressure') {
-                    replyText += `${obj.time}: pressure = ${obj.quantity.value} ${obj.quantity.unit}. `;
+                    replyText += `pressure = ${obj.quantity.value} ${obj.quantity.unit}. `;
                 }
             }
 
             // abort if no room is available
             if (lastRoomId != "") {
-                bot_reply_code(lastRoomId, replyText);
+                bot_reply_notice(lastRoomId, replyText);
             }
             else {
                 console.log("Empty room id");
@@ -130,7 +130,7 @@ function handle_udp_message(obj) {
                 // replyText = `The pressure is ${obj.pressure} at ${obj.temperature} degrees celsius.`;
                 // abort if no room is available
                 if (lastRoomId != "") {
-                    bot_reply_code(lastRoomId, replyText);
+                    bot_reply_notice(lastRoomId, replyText);
                 }
                 else {
                     console.log("Empty room id");
@@ -222,11 +222,11 @@ async function handle_matrix_message(roomId, event) {
                         break;
 
                     case "last":
-                        bot_reply_code(roomId, `Last heartbeat: ${heartbeat_last}`);
+                        bot_reply_notice(roomId, `Last heartbeat: ${heartbeat_last}`);
                         break;
 
                     default:
-                        bot_reply(roomId, helpHeartbeat);
+                        bot_reply_notice(roomId, helpHeartbeat);
                         break;
                 }
 
@@ -283,6 +283,9 @@ async function handle_matrix_message(roomId, event) {
                 bot_reply_text(roomId, "🧻");
                 break;
 
+            case "easteregg":
+                bot_reply_text(roomId, "🥚");
+                break;
             default:
                 bot_reply_notice(roomId, `How can I help you?\nYou can write '${botChar}help' for help.`);
                 break;
