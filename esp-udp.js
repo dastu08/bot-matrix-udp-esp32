@@ -6,10 +6,20 @@ const udp = dgram.createSocket('udp4');
 var esp_udpport = 50000;
 var esp_ipaddr = "192.168.179.30";
 let listenContinousFlag = false;
+let heartbeat_last = "never";
 
 
-exports.dummy = function () {
-    console.log("Dummy function from the esp-udp module");
+exports.listenOff = function () {
+    listenContinousFlag = false;
+}
+
+
+exports.listenOn = function () {
+    listenContinousFlag = true;
+}
+
+exports.getLastHeartbeat = function () {
+    return heartbeat_last;
 }
 
 // port is optional
@@ -36,6 +46,11 @@ function handle_udp_message(obj, callback) {
 
     // switch on type value
     switch (obj.type) {
+        // notify if the esp32 send a hello world event
+        case "hello world":
+            callback("ESP32 connected!");
+            break;
+
         // response it send after a get request
         case "response":
             if (obj.hasOwnProperty('quantity')) {
@@ -54,13 +69,13 @@ function handle_udp_message(obj, callback) {
             if (listenContinousFlag &
                 obj.hasOwnProperty('time') &
                 obj.hasOwnProperty('quantity')) {
-                replyText += `${obj.time}: `;
+                replyText += `${obj.time.slice(11)} : `;
                 obj.quantity.forEach(element => {
                     if (element.name == 'temperature') {
-                        replyText += `temperature = ${element.value} ${element.unit}. `;
+                        replyText += `${element.value} ${element.unit}, `;
                     }
                     if (element.name == 'pressure') {
-                        replyText += `pressure = ${element.value} ${element.unit}. `;
+                        replyText += `${element.value} ${element.unit}. `;
                     }
                 });
                 callback(replyText);

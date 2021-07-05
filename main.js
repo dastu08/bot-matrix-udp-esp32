@@ -19,7 +19,6 @@ const bot = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
 
 const botChar = "$";
 let lastRoomId = config.defaultRoomId;
-let heartbeat_last = "never";
 
 const helpText = `Available commands:
 ${botChar}temperature
@@ -47,17 +46,21 @@ last`
 
 
 function bot_reply(msg) {
-    // abort if no previous room is available
+    let roomId = "";
+
     if (lastRoomId != "") {
-        bot.sendMessage(lastRoomId, {
-            "msgtype": "m.notice",
-            "body": msg
-        });
-        console.log(`<< ${lastRoomId}: ${msg}`);
+        roomId = lastRoomId;
+
+    } else {
+        roomId = config.defaultRoomId;
+        console.log("Empty room id, send it to default room.");
     }
-    else {
-        console.log("Empty room id");
-    }
+
+    bot.sendMessage(roomId, {
+        "msgtype": "m.notice",
+        "body": msg
+    });
+    console.log(`<< ${lastRoomId}: ${msg}`);
 }
 
 function bot_send(roomId, msgtype, body) {
@@ -135,7 +138,7 @@ async function handle_matrix_message(roomId, event) {
             case "pressure":
                 res.type = "get";
                 res.quantity = "pressure";
-                espudp.end(JSON.stringify(res));
+                espudp.send(JSON.stringify(res));
                 break;
 
             case "all":
@@ -167,7 +170,7 @@ async function handle_matrix_message(roomId, event) {
                         break;
 
                     case "last":
-                        bot_send(roomId, "notice", `Last heartbeat: ${heartbeat_last}`);
+                        bot_send(roomId, "notice", `Last heartbeat: ${espudp.getLastHeartbeat()}`);
                         break;
 
                     default:
@@ -180,12 +183,12 @@ async function handle_matrix_message(roomId, event) {
             case "listen":
                 switch (words[1]) {
                     case "on":
-                        listenContinousFlag = true;
+                        espudp.listenOn();
                         bot_send(roomId, "notice", "Start listening for periodic measurements.");
                         break;
 
                     case "off":
-                        listenContinousFlag = false;
+                        espudp.listenOff();
                         bot_send(roomId, "notice", "Stop listening for periodic measurements.");
                         break;
 
@@ -220,6 +223,7 @@ async function handle_matrix_message(roomId, event) {
 
             case "admin":
                 bot_send(config.defaultRoomId, "notice", `${sender}: ${body.substring("!admin".length).trim()}`);
+                bot_send(lastRoomId, "notice", "Your message was send to the admin.");
                 break;
 
             case "help":
@@ -248,5 +252,5 @@ espudp.start(bot_reply);
 bot.on("room.message", handle_matrix_message);
 bot.start().then(() => {
     console.log("Bot started!");
-    bot_send(config.defaultRoomId, "notice", "Hello World!");
+    bot_send(config.defaultRoomId, "notice", "Bot started!");
 });
