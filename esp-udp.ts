@@ -3,10 +3,22 @@ const dgram = require('dgram');
 const udp = dgram.createSocket('udp4');
 
 // udp init
-var esp_udpport = 50000;
-var esp_ipaddr = "192.168.179.30";
-let listenContinousFlag = false;
-let heartbeat_last = "never";
+var esp_udpport: number = 50000;
+var esp_ipaddr: string = "192.168.179.30";
+let listenContinousFlag: boolean = false;
+let heartbeat_last: string = "never";
+
+interface espQuantity {
+    name: string;
+    value: string;
+    unit: string;
+}
+
+interface udpObjReceive {
+    type: string;
+    time: string;
+    quantity?: espQuantity[];
+}
 
 // turn off continuous listening
 exports.listenOff = function () {
@@ -25,7 +37,7 @@ exports.getLastHeartbeat = function () {
 
 // set ip address and port
 // port is optional
-exports.init = function (ipaddr, port) {
+exports.init = function (ipaddr: string, port?: number) {
     esp_ipaddr = ipaddr;
 
     if (port) {
@@ -34,7 +46,7 @@ exports.init = function (ipaddr, port) {
 }
 
 // send `msg` via udp
-exports.send = function (msg) {
+exports.send = function (msg: string) {
     udp.send(Buffer.from(msg), esp_udpport, esp_ipaddr, (error, bytes) => {
         if (error) {
             console.log(error);
@@ -48,7 +60,7 @@ exports.send = function (msg) {
 // `obj` is the JSON object derived from the udp message string
 // `callback(level: string, msg: string)` get called with information
 // from the udp message  
-function udp_message_handle(obj, callback) {
+function udp_message_handle(obj: udpObjReceive, callback) {
     let replyText = "";
 
     // switch on type value
@@ -60,22 +72,20 @@ function udp_message_handle(obj, callback) {
 
         // response it send after a get request
         case "response":
-            if (obj.hasOwnProperty("quantity")) {
-                if (obj.quantity.name == "temperature") {
-                    replyText += `temperature = ${obj.quantity.value} ${obj.quantity.unit}. `;
+            obj.quantity.forEach(element => {
+                if (element.name == "temperature") {
+                    replyText += `temperature ${element.value} ${element.unit}, `;
                 }
-                if (obj.quantity.name == "pressure") {
-                    replyText += `pressure = ${obj.quantity.value} ${obj.quantity.unit}. `;
+                if (element.name == "pressure") {
+                    replyText += `pressure = ${element.value} ${element.unit}. `;
                 }
-            }
+            });
             callback("info", replyText);
             break;
 
         // measurement is send periodically w/o a request
         case "measurement":
-            if (listenContinousFlag &
-                obj.hasOwnProperty("time") &
-                obj.hasOwnProperty("quantity")) {
+            if (listenContinousFlag && obj.hasOwnProperty("time") && obj.hasOwnProperty("quantity")) {
                 replyText += `${obj.time.slice(11)} : `;
                 // loop through the list of quantity
                 obj.quantity.forEach(element => {
