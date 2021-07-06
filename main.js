@@ -44,25 +44,8 @@ off
 interval <number>
 last`
 
-
-function bot_reply(msg) {
-    let roomId = "";
-
-    if (lastRoomId != "") {
-        roomId = lastRoomId;
-
-    } else {
-        roomId = config.defaultRoomId;
-        console.log("Empty room id, send it to default room.");
-    }
-
-    bot.sendMessage(roomId, {
-        "msgtype": "m.notice",
-        "body": msg
-    });
-    console.log(`<< ${lastRoomId}: ${msg}`);
-}
-
+// Send a message `body` to `roomId` of type `mstype` 
+// msgtype is either "text" or "notice"
 function bot_send(roomId, msgtype, body) {
     let content = {};
     // specify the message type via variable
@@ -86,6 +69,41 @@ function bot_send(roomId, msgtype, body) {
     console.log(`<< ${roomId}: ${body}`);
 }
 
+// Send the `msg` to different rooms debending on `level`
+// level is "info", "error" or "debug"
+function bot_reply(level, msg) {
+    let roomId = [config.defaultRoomId];
+
+    switch (level) {
+        case "info":
+            // try sending to the last room that asked
+            if (lastRoomId != "") {
+                roomId = [lastRoomId];
+            } else {
+                console.log("Empty room id, send it to default room.");
+            }
+            break;
+
+        case "error":
+            // send to the last room and the default room
+            if (lastRoomId != "") {
+                roomId.push() = lastRoomId;
+            }
+            break;
+
+        case "debug":
+        default:
+            // send to the default room
+            break;
+    }
+
+    roomId.forEach(id => {
+        bot_send(id, "notice", msg);
+    });
+}
+
+// unused function
+// format the message as source code
 function bot_reply_code(id, msg) {
     bot.sendMessage(id, {
         "msgtype": "m.text",
@@ -96,8 +114,9 @@ function bot_reply_code(id, msg) {
     console.log(`<< ${id}: ${msg}`);
 }
 
-
-async function handle_matrix_message(roomId, event) {
+// function handle for incoming matrix messages
+// event is the default matrix event object
+function matrix_message_handle(roomId, event) {
     // ignore emptly events
     if (!event["content"]) return;
 
@@ -114,21 +133,25 @@ async function handle_matrix_message(roomId, event) {
         lastRoomId = roomId;
         console.log(`>> ${roomId}: ${sender} ${body}`);
 
+        // udp response object
         let res = { type: "" };
+
+        // split message into words, omitting the bot character
         let words = body.substring(1).toLowerCase().split(" ");
+        let keyWord = words[0];
 
         // replace parts of the words with the full word
-        if ("temperature".startsWith(words[0])) {
-            words[0] = "temperature";
-        } else if ("pressure".startsWith(words[0])) {
-            words[0] = "pressure";
-        } else if ("listen".startsWith(words[0])) {
-            words[0] = "listen";
-        } else if ("heartbeat".startsWith([words[0]])) {
-            words[0] = "heartbeat";
+        if ("temperature".startsWith(keyWord)) {
+            keyWord = "temperature";
+        } else if ("pressure".startsWith(keyWord)) {
+            keyWord = "pressure";
+        } else if ("listen".startsWith(keyWord)) {
+            keyWord = "listen";
+        } else if ("heartbeat".startsWith([keyWord])) {
+            keyWord = "heartbeat";
         }
 
-        switch (words[0]) {
+        switch (keyWord) {
             case "temperature":
                 res.type = "get";
                 res.quantity = "temperature";
@@ -148,6 +171,7 @@ async function handle_matrix_message(roomId, event) {
                 break;
 
             case "heartbeat":
+            case "hb":
                 res.type = "set";
 
                 switch (words[1]) {
@@ -177,7 +201,6 @@ async function handle_matrix_message(roomId, event) {
                         bot_send(roomId, "notice", helpHeartbeat);
                         break;
                 }
-
                 break;
 
             case "listen":
@@ -246,10 +269,20 @@ async function handle_matrix_message(roomId, event) {
     }
 }
 
-espudp.init("192.168.179.30", 50000);
+if (config.port) {
+    espudp.init(config.ipAddress, config.port);
+} else {
+    // omit port to use the default port
+    espudp.init(config.ipAddress)
+}
+
+// start the udp stuff and specify the callback for received udp messages
 espudp.start(bot_reply);
 
-bot.on("room.message", handle_matrix_message);
+// specify the handler function for matrix messages
+bot.on("room.message", matrix_message_handle);
+
+// start the bot and send a message to the default room
 bot.start().then(() => {
     console.log("Bot started!");
     bot_send(config.defaultRoomId, "notice", "Bot started!");

@@ -8,7 +8,10 @@ You need an `env.json` file that specifies at least
 {
     "homeserverUrl": "", // fill with your home server
     "accessToken": "", // your private access token
-    "storage": "bot.json"
+    "storage": "bot.json",
+    "defaultRoomdId": "", // a default matrix room
+    "ipAddress": "192.168.178.1", // ipv4 address of the esp32
+    "port": 50000 // port for udp communication, is optional (default 50000)
 }
 ```
 make sure to exclude this file from code versioning as it contians your secret/private access token.
