@@ -4,12 +4,12 @@ const fs = require("fs");
 const config = JSON.parse(fs.readFileSync("env.json"));
 
 // get the esp-udp stuff
-const espudp = require("./esp-udp");
+import * as  espudp from "./esp-udp";
 
 // get the matrix-bot-sdk stuff
-const sdk = require("matrix-bot-sdk");
-const MatrixClient = sdk.MatrixClient;
-const SimpleFsStorageProvider = sdk.SimpleFsStorageProvider;
+import { MatrixClient, SimpleFsStorageProvider} from "matrix-bot-sdk";
+// const MatrixClient = sdk.MatrixClient;
+// const SimpleFsStorageProvider = sdk.SimpleFsStorageProvider;
 // const AutojoinRoomsMixin = sdk.AutojoinRoomsMixin;
 
 // matrix bot init

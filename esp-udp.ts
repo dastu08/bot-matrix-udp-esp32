@@ -21,23 +21,23 @@ interface udpObjReceive {
 }
 
 // turn off continuous listening
-exports.listenOff = function () {
+export function listenOff() {
     listenContinousFlag = false;
 }
 
 // turn on continuous listening
-exports.listenOn = function () {
+export function listenOn() {
     listenContinousFlag = true;
 }
 
 // get the time value of the last heartbeat
-exports.getLastHeartbeat = function () {
+export function getLastHeartbeat(): string{
     return heartbeat_last;
 }
 
 // set ip address and port
 // port is optional
-exports.init = function (ipaddr: string, port?: number) {
+export function init(ipaddr: string, port?: number) {
     esp_ipaddr = ipaddr;
 
     if (port) {
@@ -46,7 +46,7 @@ exports.init = function (ipaddr: string, port?: number) {
 }
 
 // send `msg` via udp
-exports.send = function (msg: string) {
+export function send(msg: string) {
     udp.send(Buffer.from(msg), esp_udpport, esp_ipaddr, (error, bytes) => {
         if (error) {
             console.log(error);
@@ -120,7 +120,7 @@ function udp_message_handle(obj: udpObjReceive, callback) {
 // start the udp stuff by defining event listerners and binding the socket to the port
 // `callback(level: string, msg: string)` gets called to return information
 // from the udp module
-exports.start = function (callback) {
+export function start(callback) {
     udp.on("error", (err) => {
         console.log(`udp server error:\n${err.stack}`);
         udp.close();
