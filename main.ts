@@ -7,7 +7,7 @@ const config = JSON.parse(fs.readFileSync("env.json"));
 import * as  espudp from "./esp-udp";
 
 // get the matrix-bot-sdk stuff
-import { MatrixClient, SimpleFsStorageProvider} from "matrix-bot-sdk";
+import { MatrixClient, SimpleFsStorageProvider } from "matrix-bot-sdk";
 // const MatrixClient = sdk.MatrixClient;
 // const SimpleFsStorageProvider = sdk.SimpleFsStorageProvider;
 // const AutojoinRoomsMixin = sdk.AutojoinRoomsMixin;
@@ -44,11 +44,11 @@ off
 interval <number>
 last`
 
-interface udpObjSend {
+type udpObjSend = {
     type: string;
     quantity?: string[];
     name?: string;
-    value?: string|number;
+    value?: string | number;
 }
 
 // Send a message `body` to `roomId` of type `mstype` 

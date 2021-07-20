@@ -8,13 +8,13 @@ var esp_ipaddr: string = "192.168.179.30";
 let listenContinousFlag: boolean = false;
 let heartbeat_last: string = "never";
 
-interface espQuantity {
+type espQuantity = {
     name: string;
     value: string;
     unit: string;
 }
 
-interface udpObjReceive {
+type udpObjReceive = {
     type: string;
     time: string;
     quantity?: espQuantity[];
@@ -31,7 +31,7 @@ export function listenOn() {
 }
 
 // get the time value of the last heartbeat
-export function getLastHeartbeat(): string{
+export function getLastHeartbeat(): string {
     return heartbeat_last;
 }
 
@@ -60,7 +60,7 @@ export function send(msg: string) {
 // `obj` is the JSON object derived from the udp message string
 // `callback(level: string, msg: string)` get called with information
 // from the udp message  
-function udp_message_handle(obj: udpObjReceive, callback) {
+function udp_message_handle(obj: udpObjReceive, callback: (level: string, message: string) => void) {
     let replyText = "";
 
     // switch on type value
@@ -120,7 +120,7 @@ function udp_message_handle(obj: udpObjReceive, callback) {
 // start the udp stuff by defining event listerners and binding the socket to the port
 // `callback(level: string, msg: string)` gets called to return information
 // from the udp module
-export function start(callback) {
+export function start(callback: (level: string, message: string) => void) {
     udp.on("error", (err) => {
         console.log(`udp server error:\n${err.stack}`);
         udp.close();
