@@ -3,6 +3,8 @@ const fs = require("fs");
 // load configuration of homeserver, etc.
 const config = JSON.parse(fs.readFileSync("env.json"));
 
+import * as aes256cbc from "./aes-256-cbc";
+
 // get the esp-udp stuff
 import * as  espudp from "./esp-udp";
 
@@ -276,21 +278,39 @@ function matrix_message_handle(roomId: string, event: object) {
     }
 }
 
-if (config.port) {
-    espudp.init(config.ipAddress, config.port);
-} else {
-    // omit port to use the default port
-    espudp.init(config.ipAddress)
+function main(): void {
+    if (config.port) {
+        espudp.init(config.ipAddress, config.port);
+    } else {
+        // omit port to use the default port
+        espudp.init(config.ipAddress)
+    }
+
+
+
+    // start the udp stuff and specify the callback for received udp messages
+    espudp.start(bot_reply);
+
+    // specify the handler function for matrix messages
+    bot.on("room.message", matrix_message_handle);
+
+    // start the bot and send a message to the default room
+    bot.start().then(() => {
+        console.log("Bot started!");
+        bot_send(config.defaultRoomId, "notice", "Bot started!");
+    });
 }
 
-// start the udp stuff and specify the callback for received udp messages
-espudp.start(bot_reply);
+// main();
 
-// specify the handler function for matrix messages
-bot.on("room.message", matrix_message_handle);
+let key = aes256cbc.generateKey();
+console.log(key.toString("hex"));
+let iv = aes256cbc.generateIv();
+console.log(iv.toString("hex"));
 
-// start the bot and send a message to the default room
-bot.start().then(() => {
-    console.log("Bot started!");
-    bot_send(config.defaultRoomId, "notice", "Bot started!");
-});
+aes256cbc.encrypt(key, iv, "Hello World!", (cipherText) => {
+    console.log(cipherText.toString("hex"));
+    aes256cbc.decrypt(key, cipherText, (plainText) => {
+        console.log(plainText);
+    });    
+})

@@ -46,8 +46,13 @@ export function init(ipaddr: string, port?: number) {
 }
 
 // send `msg` via udp
-export function send(msg: string) {
-    udp.send(Buffer.from(msg), esp_udpport, esp_ipaddr, (error, bytes) => {
+export function send(msg: string | Buffer) {
+    // convert string to buffer if neeeded
+    if (typeof(msg) == "string") {
+        msg = Buffer.from(msg);
+    }
+
+    udp.send(msg, esp_udpport, esp_ipaddr, (error, bytes) => {
         if (error) {
             console.log(error);
             udp.close();
