@@ -8,17 +8,15 @@ import * as  espudp from "./lib-esp32-udp/esp-udp";
 
 // get the matrix-bot-sdk stuff
 import { MatrixClient, SimpleFsStorageProvider } from "matrix-bot-sdk";
-// const MatrixClient = sdk.MatrixClient;
-// const SimpleFsStorageProvider = sdk.SimpleFsStorageProvider;
-// const AutojoinRoomsMixin = sdk.AutojoinRoomsMixin;
 
 // matrix bot init
 const storage = new SimpleFsStorageProvider(config.storage);
 const bot = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
-// AutojoinRoomsMixin.setupOnClient(bot);
 
 const botChar = "$";
 let lastRoomId: string = config.defaultRoomId;
+let listenContinousFlag: boolean = false;
+let heartbeat_last: string = "never";
 
 const helpText = `Available commands:
 ${botChar}temperature
@@ -44,11 +42,14 @@ off
 interval <number>
 last`
 
-type udpObjSend = {
-    type: string;
-    quantity?: string[];
-    name?: string;
-    value?: string | number;
+// turn off continuous listening
+export function listenOff() {
+    listenContinousFlag = false;
+}
+
+// turn on continuous listening
+export function listenOn() {
+    listenContinousFlag = true;
 }
 
 // Send a message `body` to `roomId` of type `mstype` 
@@ -82,13 +83,27 @@ function bot_reply(level: string, msg: string) {
     let roomId: string[] = [config.defaultRoomId];
 
     switch (level) {
-        case "info":
+        case "response":
             // try sending to the last room that asked
             if (lastRoomId != "") {
                 roomId = [lastRoomId];
             } else {
                 console.log("Empty room id, send it to default room.");
             }
+            break;
+
+        case "measurement":
+            if (listenContinousFlag) {
+                roomId = [lastRoomId];
+            }
+            else {
+                roomId = [];
+            }
+            break;
+
+        case "heartbeat":
+            heartbeat_last = msg;
+            msg = `Got heartbeat ${heartbeat_last}`;
             break;
 
         case "error":
@@ -140,9 +155,6 @@ function matrix_message_handle(roomId: string, event: object) {
         lastRoomId = roomId;
         console.log(`>> ${roomId}: ${sender} ${body}`);
 
-        // udp response object
-        let res: udpObjSend = { type: "" };
-
         // split message into words, omitting the bot character
         let words: string[] = body.substring(1).toLowerCase().split(" ");
         let keyWord: string = words[0];
@@ -160,48 +172,34 @@ function matrix_message_handle(roomId: string, event: object) {
 
         switch (keyWord) {
             case "temperature":
-                res.type = "get";
-                res.quantity = ["temperature"];
-                espudp.send(JSON.stringify(res));
+                espudp.get("temperature");
                 break;
 
             case "pressure":
-                res.type = "get";
-                res.quantity = ["pressure"];
-                espudp.send(JSON.stringify(res));
+                espudp.get("pressure");
                 break;
 
             case "all":
-                res.type = "get";
-                res.quantity = ["temperature", "pressure"];
-                espudp.send(JSON.stringify(res));
+                espudp.get("all");
                 break;
 
             case "heartbeat":
             case "hb":
-                res.type = "set";
-
                 switch (words[1]) {
                     case "on":
-                        res.name = "heartbeat";
-                        res.value = "on";
-                        espudp.send(JSON.stringify(res));
+                        espudp.set("heartbeat", "on");
                         break;
 
                     case "off":
-                        res.name = "heartbeat";
-                        res.value = "off";
-                        espudp.send(JSON.stringify(res));
+                        espudp.set("heartbeat", "off");
                         break;
 
                     case "interval":
-                        res.name = "heartbeat_interval";
-                        res.value = parseInt(words[2]);
-                        espudp.send(JSON.stringify(res));
+                        espudp.set("heartbeat_interval", parseInt(words[2]));
                         break;
 
                     case "last":
-                        bot_send(roomId, "notice", `Last heartbeat: ${espudp.getLastHeartbeat()}`);
+                        bot_send(roomId, "notice", `Last heartbeat: ${heartbeat_last}`);
                         break;
 
                     default:
@@ -213,20 +211,17 @@ function matrix_message_handle(roomId: string, event: object) {
             case "listen":
                 switch (words[1]) {
                     case "on":
-                        espudp.listenOn();
+                        listenOn();
                         bot_send(roomId, "notice", "Start listening for periodic measurements.");
                         break;
 
                     case "off":
-                        espudp.listenOff();
+                        listenOff();
                         bot_send(roomId, "notice", "Stop listening for periodic measurements.");
                         break;
 
                     case "interval":
-                        res.type = "set";
-                        res.name = "measurement_interval";
-                        res.value = parseInt(words[2]);
-                        espudp.send(JSON.stringify(res));
+                        espudp.set("listen_interval", parseInt(words[2]));
                         break;
 
                     default:
