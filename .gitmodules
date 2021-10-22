@@ -1,0 +1,3 @@
+[submodule "lib-esp32-udp"]
+	path = lib-esp32-udp
+	url = git@github.com:dastu08/lib-esp32-udp.git
