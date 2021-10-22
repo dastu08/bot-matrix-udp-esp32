@@ -276,15 +276,9 @@ function matrix_message_handle(roomId: string, event: object) {
     }
 }
 
-if (config.port) {
-    espudp.init(config.ipAddress, config.port);
-} else {
-    // omit port to use the default port
-    espudp.init(config.ipAddress)
-}
 
 // start the udp stuff and specify the callback for received udp messages
-espudp.start(bot_reply);
+espudp.start(config.ipAddress, config.port, bot_reply);
 
 // specify the handler function for matrix messages
 bot.on("room.message", matrix_message_handle);
