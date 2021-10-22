@@ -4,7 +4,7 @@ const fs = require("fs");
 const config = JSON.parse(fs.readFileSync("env.json"));
 
 // get the esp-udp stuff
-import * as  espudp from "./esp-udp";
+import * as  espudp from "./lib-esp32-udp/esp-udp";
 
 // get the matrix-bot-sdk stuff
 import { MatrixClient, SimpleFsStorageProvider } from "matrix-bot-sdk";
