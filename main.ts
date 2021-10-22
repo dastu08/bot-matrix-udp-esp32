@@ -4,12 +4,12 @@ const fs = require("fs");
 const config = JSON.parse(fs.readFileSync("env.json"));
 
 // get the esp-udp stuff
-const espudp = require("./esp-udp");
+import * as  espudp from "./esp-udp";
 
 // get the matrix-bot-sdk stuff
-const sdk = require("matrix-bot-sdk");
-const MatrixClient = sdk.MatrixClient;
-const SimpleFsStorageProvider = sdk.SimpleFsStorageProvider;
+import { MatrixClient, SimpleFsStorageProvider } from "matrix-bot-sdk";
+// const MatrixClient = sdk.MatrixClient;
+// const SimpleFsStorageProvider = sdk.SimpleFsStorageProvider;
 // const AutojoinRoomsMixin = sdk.AutojoinRoomsMixin;
 
 // matrix bot init
@@ -18,7 +18,7 @@ const bot = new MatrixClient(config.homeserverUrl, config.accessToken, storage);
 // AutojoinRoomsMixin.setupOnClient(bot);
 
 const botChar = "$";
-let lastRoomId = config.defaultRoomId;
+let lastRoomId: string = config.defaultRoomId;
 
 const helpText = `Available commands:
 ${botChar}temperature
@@ -44,10 +44,17 @@ off
 interval <number>
 last`
 
+type udpObjSend = {
+    type: string;
+    quantity?: string[];
+    name?: string;
+    value?: string | number;
+}
+
 // Send a message `body` to `roomId` of type `mstype` 
 // msgtype is either "text" or "notice"
-function bot_send(roomId, msgtype, body) {
-    let content = {};
+function bot_send(roomId: string, msgtype: string, body: string) {
+    let content: object = {};
     // specify the message type via variable
     switch (msgtype) {
         case "text":
@@ -71,8 +78,8 @@ function bot_send(roomId, msgtype, body) {
 
 // Send the `msg` to different rooms debending on `level`
 // level is "info", "error" or "debug"
-function bot_reply(level, msg) {
-    let roomId = [config.defaultRoomId];
+function bot_reply(level: string, msg: string) {
+    let roomId: string[] = [config.defaultRoomId];
 
     switch (level) {
         case "info":
@@ -87,7 +94,7 @@ function bot_reply(level, msg) {
         case "error":
             // send to the last room and the default room
             if (lastRoomId != "") {
-                roomId.push() = lastRoomId;
+                roomId.push(lastRoomId);
             }
             break;
 
@@ -104,7 +111,7 @@ function bot_reply(level, msg) {
 
 // unused function
 // format the message as source code
-function bot_reply_code(id, msg) {
+function bot_reply_code(id: string, msg: string) {
     bot.sendMessage(id, {
         "msgtype": "m.text",
         "body": msg,
@@ -116,7 +123,7 @@ function bot_reply_code(id, msg) {
 
 // function handle for incoming matrix messages
 // event is the default matrix event object
-function matrix_message_handle(roomId, event) {
+function matrix_message_handle(roomId: string, event: object) {
     // ignore emptly events
     if (!event["content"]) return;
 
@@ -134,11 +141,11 @@ function matrix_message_handle(roomId, event) {
         console.log(`>> ${roomId}: ${sender} ${body}`);
 
         // udp response object
-        let res = { type: "" };
+        let res: udpObjSend = { type: "" };
 
         // split message into words, omitting the bot character
-        let words = body.substring(1).toLowerCase().split(" ");
-        let keyWord = words[0];
+        let words: string[] = body.substring(1).toLowerCase().split(" ");
+        let keyWord: string = words[0];
 
         // replace parts of the words with the full word
         if ("temperature".startsWith(keyWord)) {
@@ -147,20 +154,20 @@ function matrix_message_handle(roomId, event) {
             keyWord = "pressure";
         } else if ("listen".startsWith(keyWord)) {
             keyWord = "listen";
-        } else if ("heartbeat".startsWith([keyWord])) {
+        } else if ("heartbeat".startsWith(keyWord)) {
             keyWord = "heartbeat";
         }
 
         switch (keyWord) {
             case "temperature":
                 res.type = "get";
-                res.quantity = "temperature";
+                res.quantity = ["temperature"];
                 espudp.send(JSON.stringify(res));
                 break;
 
             case "pressure":
                 res.type = "get";
-                res.quantity = "pressure";
+                res.quantity = ["pressure"];
                 espudp.send(JSON.stringify(res));
                 break;
 
