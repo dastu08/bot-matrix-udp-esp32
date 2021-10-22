@@ -90,6 +90,10 @@ function bot_reply(level: string, msg: string) {
             } else {
                 console.log("Empty room id, send it to default room.");
             }
+
+            roomId.forEach(id => {
+                bot_reply_code(id, msg);
+            });
             break;
 
         case "measurement":
@@ -99,11 +103,19 @@ function bot_reply(level: string, msg: string) {
             else {
                 roomId = [];
             }
+
+            roomId.forEach(id => {
+                bot_reply_code(id, msg);
+            });
             break;
 
         case "heartbeat":
             heartbeat_last = msg;
             msg = `Got heartbeat ${heartbeat_last}`;
+
+            roomId.forEach(id => {
+                bot_send(id, "notice", msg);
+            });
             break;
 
         case "error":
@@ -111,24 +123,28 @@ function bot_reply(level: string, msg: string) {
             if (lastRoomId != "") {
                 roomId.push(lastRoomId);
             }
+
+            roomId.forEach(id => {
+                bot_send(id, "notice", msg);
+            });
             break;
 
         case "debug":
         default:
             // send to the default room
+            roomId.forEach(id => {
+                bot_send(id, "notice", msg);
+            });
             break;
     }
 
-    roomId.forEach(id => {
-        bot_send(id, "notice", msg);
-    });
 }
 
 // unused function
 // format the message as source code
 function bot_reply_code(id: string, msg: string) {
     bot.sendMessage(id, {
-        "msgtype": "m.text",
+        "msgtype": "m.notice",
         "body": msg,
         "format": "org.matrix.custom.html",
         "formatted_body": `<code>${msg}</code>`
