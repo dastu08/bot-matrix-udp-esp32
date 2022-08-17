@@ -8,6 +8,7 @@
         "matrix-bot-sdk": "0.5.18"
     },
     "scripts": {
-        "start": "node build/main.js"
+        "start": "node build/main.js",
+        "prestart": "tsc -p tsconfig.json"
     }
 }
