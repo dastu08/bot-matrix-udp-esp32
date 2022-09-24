@@ -291,7 +291,7 @@ function matrix_message_handle(roomId: string, event: object) {
 espudp.loggingDisable()
 // espudp.loggingEnable()
 // start the udp stuff and specify the callback for received udp messages
-espudp.start(config.ipAddress, config.port, bot_reply);
+espudp.start(config.ipAddress, config.port, config.key, bot_reply);
 
 // specify the handler function for matrix messages
 bot.on("room.message", matrix_message_handle);

@@ -17,7 +17,8 @@ You need an `env.json` file that specifies at least
     "storage": "bot.json",
     "defaultRoomdId": "", // a default matrix room
     "ipAddress": "192.168.178.1", // ipv4 address of the esp32
-    "port": 50000 // port for udp communication
+    "port": 50000, // port for udp communication
+    "key": "014a07fc...97f4a683" // 32byte hex string of the encryption key
 }
 ```
 >Make sure to exclude this file from code versioning as it contians your >secret/private access token.
