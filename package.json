@@ -5,11 +5,13 @@
     "private": true,
     "main": "build/main.js",
     "dependencies": {
-        "matrix-bot-sdk": "0.5.18",
+        "matrix-bot-sdk": "0.5.18"
+    },
+    "devDependencies": {
         "typescript": "^4.8.3"
     },
     "scripts": {
         "start": "node build/main.js",
-        "prestart": "tsc -p tsconfig.json"
+        "build": "tsc -p tsconfig.json"
     }
 }
