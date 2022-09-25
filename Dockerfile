@@ -1,4 +1,4 @@
-FROM node:14-alpine
+FROM node:16-alpine
 COPY ./package.json /bot/package.json
 COPY ./lib-esp32-udp/ /bot/lib-esp32-udp/
 COPY ./main.ts /bot/main.ts
