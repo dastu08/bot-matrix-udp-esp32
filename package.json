@@ -12,6 +12,7 @@
     },
     "scripts": {
         "start": "node build/main.js",
-        "build": "npx tsc -p tsconfig.json"
+        "build": "npx tsc -p tsconfig.json",
+	"genkey": "node genkey.js"
     }
 }
