@@ -1,15 +1,18 @@
 {
     "name": "bot-matrix-udp-esp32",
     "description": "A Matrix bot that uses UDP to communicate to another device like the esp32.",
-    "version": "0.1.0",
+    "version": "1.0.1",
     "private": true,
-    "main": "main.js",
+    "main": "build/main.js",
     "dependencies": {
-        "matrix-bot-sdk": "^0.6.2",
+        "matrix-bot-sdk": "^0.6.2"
+    },
+    "devDependencies": {
         "typescript": "^4.8.3"
     },
     "scripts": {
         "start": "node build/main.js",
-        "prestart": "tsc -p tsconfig.json"
+        "build": "npx tsc -p tsconfig.json",
+	"genkey": "node genkey.js"
     }
 }
