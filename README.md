@@ -23,7 +23,7 @@ You need an `env.json` file that specifies at least
 ```
 > Make sure to exclude this file from code versioning as it contains your secret/private access token and UDP encryption key.
 
-The SDK used for the bot is the [`matrix-bot-sdk`](https://github.com/turt2live/matrix-bot-sdk) you can install it with `npm install matrix-bot-sdk` then use it in the code with `const sdk = require("matrix-bot-sdk");` Otherwise the the SDK version `0.5.17` is listed as a dependency in `package.json`. Then is sufficient to run `npm install`. 
+The SDK used for the bot is the [`matrix-bot-sdk`](https://github.com/turt2live/matrix-bot-sdk) you can install it with `npm install matrix-bot-sdk` then use it in the code with `const sdk = require("matrix-bot-sdk");` It is listed as dependency in `package.json` so it is sufficient to run `npm install`. 
 
 ## Usage
 You interact with the bot by sending message in a room in which the bot is presend. Currently the room has to be unencrypted for the bot to work.  
