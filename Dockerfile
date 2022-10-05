@@ -8,7 +8,7 @@ WORKDIR /bot
 RUN npm install
 RUN npm run build
 
-FROM node:16-alpine as workingstage
+FROM node:16 as workingstage
 COPY --from=buildstage /bot/build /bot/build
 COPY --from=buildstage /bot/package.json /bot/package.json
 COPY --from=buildstage /bot/package-lock.json /bot/package-lock.json
